@@ -35,5 +35,6 @@ Route::resource('product', ProductController::class)->names('products');
 Route::resource('type', TypeController::class)->names('types');
 Route::resource('group', GroupController::class)->names('groups');
 Route::resource('note', NoteController::class)->names('notes');
-Route::post('login-google', [AuthController::class, 'loginWithGoogle']);
 Route::post('login', [AuthController::class, 'login']);
+Route::post('login-google', [AuthController::class, 'loginWithGoogle']);
+Route::get('/note/create', [NoteController::class, 'create']);

@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('types', function (Blueprint $table) {
             $table->id();
             $table->string('type');
+            $table->unsignedBigInteger('user_id');
             $table->softDeletes(); 
             $table->timestamps();
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 

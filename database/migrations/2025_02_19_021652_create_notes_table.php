@@ -14,14 +14,16 @@ return new class extends Migration
         Schema::create('notes', function (Blueprint $table) {
             $table->id();
             $table->string('description');
-            $table->boolean('completed');
+            $table->boolean('completed')->default(false);
             $table->date('start_date');
             $table->date('end_date');
             $table->unsignedBigInteger('type_id');
             $table->unsignedBigInteger('group_id');
+            $table->unsignedBigInteger('user_id');
             $table->timestamps();
             $table->foreign('type_id')->references('id')->on('types');
             $table->foreign('group_id')->references('id')->on('groups');
+            $table->foreign('user_id')->references('id')->on('users');
         });
     }
 

@@ -16,28 +16,28 @@ class AuthController extends Controller
         try {
             $firebase = (new Factory)->withServiceAccount(storage_path('app/firebase_credentials.json'));
             $auth = $firebase->createAuth();
-
-            // 🔥 Verificar el ID Token de Firebase
+            // Verificar el ID Token de Firebase
             $verifiedIdToken = $auth->verifyIdToken($request->token);
-
-            // ✅ Acceder correctamente a los claims en Lcobucci/JWT 4+
+            // Obtener datos del usuario
             $email = $verifiedIdToken->claims()->get('email');
             $name = $verifiedIdToken->claims()->get('name');
             $uid = $verifiedIdToken->claims()->get('sub');
-
-            // 🔍 Buscar o registrar usuario en la base de datos
+            // Buscar o registrar usuario en la base de datos
             $user = User::firstOrCreate(
                 ['email' => $email],
                 ['name' => $name, 'password' => bcrypt(uniqid()), 'google_id' => $uid]
             );
 
-            // Generar token para el usuario en Laravel Sanctum
-            $authToken = $user->createToken('authToken')->plainTextToken;
+            session(['user_id' => $user->id]);
+            session(['user_email' => $user->email]);
+            session()->save();
 
             return response()->json([
-                'message' => 'Autenticación exitosa',
-                'authToken' => $authToken,
-                'user' => $user,
+                'session_id' => session()->getId(),
+                'user' => [
+                    'id' => session('user_id'),
+                    'email' => session('user_email'),
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 401);
@@ -46,9 +46,8 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        dd($request);
         $validator = Validator::make($request->all(), [
-            'email' => 'required',
+            'email' => 'required|email',
             'password' => 'required|string'
         ]);
 
@@ -58,14 +57,18 @@ class AuthController extends Controller
 
         $validatedData = $validator->validated();
 
-        if (Auth::attempt($validatedData)) {
-            $request->session()->regenerate();
+        $user = User::where('email', $validatedData['email'])->first();
 
-            $user = User::where("email", $request->email)->first();
+        session(['user_id' => $user->id]);
+        session(['user_email' => $user->email]);
+        session()->save();
 
-            return response()->json($user);
-        } else {
-            return response()->json(["error" => "Usuario y/o contraseña incorrectos"], 404);
-        }
+        return response()->json([
+            'session_id' => session()->getId(),
+            'user' => [
+                'id' => session('user_id'),
+                'email' => session('user_email'),
+            ]
+        ]);
     }
 }
