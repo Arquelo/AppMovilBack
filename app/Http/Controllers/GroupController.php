@@ -71,7 +71,10 @@ class GroupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Group $group) {}
+    public function show(Group $group)
+    {
+        return response()->json($group);
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -81,7 +84,41 @@ class GroupController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Group $group) {}
+    public function update(Request $request, Group $group)
+    {
+        $sessionId = $request->header('X-Session-ID');
+        session()->setId($sessionId);
+        session()->start();
+        // 🔹 Acceder a los datos guardados en sesión
+        $userId = session('user_id');
+        // respuesta en caso de error
+        if (!$userId) return response()->json(['error' => 'Sesión inválida o expirada'], 401);
+        // validacion de los datos
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string',
+            'color' => 'required|string',
+        ], [
+            'title.required' => 'El campo titulo es requerido',
+            'color.required' => 'El campo color es requerido',
+        ]);
+        // validar los datos
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Error al procesar los datos',
+                'details' => array_values($validator->errors()->all())
+            ], 400);
+        }
+        $validated_data = $validator->validated();
+        // verificar que el registro sea del usuario logueado
+        if ($group->user_id != $userId) return response()->json(['message' => 'No tienes permisos para editar este registro'], 401);
+        // validacion de la creacion del typo y realizar la creacion del tipo
+        if ($group->update($validated_data)) {
+            // respuesta en caso de exito
+            return response()->json(['message' => 'Grupo creado correctamente']);
+        }
+        // respuesta en caso de error
+        return response()->json(['message' => 'Error al crear el producto'], 400);
+    }
 
     /**
      * Remove the specified resource from storage.
