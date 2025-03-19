@@ -24,7 +24,7 @@ class NoteController extends Controller
             $sessionId = $request->header('X-Session-ID');
             session()->setId($sessionId);
             session()->start();
-            // 🔹 Acceder a los datos guardados en sesión
+            // Acceder a los datos guardados en sesión
             $userId = session('user_id');
             // respuesta en caso de error
             if (!$userId) return response()->json(['error' => $this->permission], 401);
